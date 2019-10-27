@@ -1,0 +1,6 @@
+# fileformats to ignore
+*.csv
+*.txt
+*.xlsx
+*.png
+*.docx
