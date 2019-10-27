@@ -20,45 +20,6 @@ class SingleMaltsSpider(Spider):
         # find result_urls
         result_urls = ["https://www.masterofmalt.com/country-style/scotch/single-malt-whisky/{}/".format(x) for x in range(1, total_pages+1)]
 
-        # identify all product pages but only scrape those that have reviews
-#        specifier = []
-#        for i in range(0,len(id_info)):
-#            specifier.append(re.findall(r'\d+', id_info[i])[1])
-#        rating_paths = []
-#        for i in range(0,len(specifier)):
-#            rating_paths.append(response.xpath('//*[@id="ContentPlaceHolder1_ctl{}_containerRating"]'.format(specifier[i])).extract())
-#
-#        products_with_rating = [elem !=[] for elem in rating_paths]
-#
-#        all_product_urls = response.xpath('//*[@id="productBoxWideContainer"]//div[@class = "boxBgr product-box-wide h-gutter js-product-box-wide"]/@data-product-url').extract()
-#        print(len(all_product_urls))
-#        print('=' * 50)
-
-        # take product_urls only of those for which rating_paths is not empty
-        #def filter_by_rating (lis1, lis2):
-#        product_urls = []
-#        for idx in range(0,len(products_with_rating)):
-#            if products_with_rating[idx]:
-#                product_urls.append(all_product_urls[idx])
-
-        # this is a scrapy request, which method to use to parse
-#         product_urls = all_product_urls[list(map(lambda item: item!=[], rating_paths))]
-
-        #product_urls = filter_by_rating(products_with_rating, all_product_urls)
-
-#        products_with_rating = [elem !=[] for elem in rating_paths]
-#        product_urls = list({key:value for (key,value) in dict(zip(products_with_rating, all_product_urls)).items() if value == True}.keys())
-#
-#        product_urls = []
-#        if item in rating_paths !=[]:
-#            product_urls.append(all_product_urls[index(item)])
-
-
-#       try:
-#           price_paths = response.xpath('//*[@id="ContentPlaceHolder1_ctl00_pricesWrapper"]//span/text()').extract()
-#            price = re.findall(r'\$\d+\.\d+', ''.join(price))
-#       except:
-#           price = ""
         for url in result_urls[:1]: # limit right now to first 2
             yield Request(url= url, callback = self.parse_result_page)
 
@@ -66,12 +27,37 @@ class SingleMaltsSpider(Spider):
 
         product_urls = response.xpath('//*[@id="productBoxWideContainer"]//div[@class = "boxBgr product-box-wide h-gutter js-product-box-wide"]/@data-product-url').extract()
 
+         price_paths = []
+         for i in range(0,len(product_urls)):
+                price_paths.append(response.xpath('//*[@id="ContentPlaceHolder1_ctl{}_containerRating"]'.format(i))).extract()
+
+
+#        all_product_urls = response.xpath('//*[@id="productBoxWideContainer"]//div[@class = "boxBgr product-box-wide h-gutter js-product-box-wide"]/@data-product-url').extract()
+#        print(len(all_product_urls))
+#        print('=' * 50)
+
+#        product_urls = []
+#        for i in rating_paths !=[]:
+#            product_urls.append(all_product_urls[index(i)])
+
+
+        #price_xpaths = ["https://www.masterofmalt.com/country-style/scotch/single-malt-whisky/{}/".format(x) for x in range(1, total_pages+1)]
+        #try:
+        #    price_paths = response.xpath('//*[@id="ContentPlaceHolder1_ctl00_pricesWrapper"]//span/text()').extract()
+        #    price = re.findall(r'\$\d+\.\d+', ''.join(price))
+        #except:
+        #    price = ""
+
+        product_urls = response.xpath('//*[@id="productBoxWideContainer"]//div[@class = "boxBgr product-box-wide h-gutter js-product-box-wide"]/@data-product-url').extract()
+
         for url in product_urls:
-            yield Request(url= url, callback = self.parse_product_page)
-                
+            yield Request(url= url, callback = self.parse_product_page, meta={'price':price})
+
 
     def parse_product_page(self, response):
         # obtain Whisky details (review numbers, rating, region, distillery, age, tasting notes)
+        price = response.meta['price']
+
         try:
             number_of_reviews = response.xpath('//*[@id="ContentPlaceHolder1_productRating_productUserRating"]/a/div[2]/text()').extract()
             number_of_reviews = re.findall(r'\d+', ''.join(number_of_reviews))
